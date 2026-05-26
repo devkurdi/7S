@@ -1,114 +1,163 @@
 import { create } from 'zustand'
+import { HardcodedQuestion } from './questions'
 
 export type Lang = 'badini' | 'sorani'
 
-export type AppView = 'home' | 'quiz' | 'top' | 'admin' | 'results'
-
-export interface QuizQuestion {
-  id: string
-  textBadini: string
-  textSorani: string
-  option1Badini: string
-  option1Sorani: string
-  option2Badini: string
-  option2Sorani: string
-  option3Badini: string
-  option3Sorani: string
-  option4Badini: string
-  option4Sorani: string
-  correctAnswer: number
-  categoryId: string
-  category: {
-    id: string
-    nameBadini: string
-    nameSorani: string
-  }
-}
-
-export interface QuizCategory {
-  id: string
-  nameBadini: string
-  nameSorani: string
-  _count?: { questions: number }
-}
-
-export interface ParticipantData {
+export interface PlayerData {
   id: string
   name: string
   avatar: string | null
-}
-
-export interface LeaderboardEntry {
-  id: string
-  name: string
-  avatar: string | null
+  score: number
   correctCount: number
   totalAnswered: number
-  score: number
+  createdAt: number
 }
 
+export type SectionView = 'home' | 'quiz' | 'results'
+
 interface AppState {
-  view: AppView
-  setView: (view: AppView) => void
+  // Language
   lang: Lang
   setLang: (lang: Lang) => void
-  participant: ParticipantData | null
-  setParticipant: (p: ParticipantData | null) => void
-  selectedCategoryId: string | null
-  setSelectedCategoryId: (id: string | null) => void
+
+  // Current view
+  section: SectionView
+  setSection: (s: SectionView) => void
+
+  // Player info
+  playerName: string
+  setPlayerName: (n: string) => void
+  playerAvatar: string | null
+  setPlayerAvatar: (a: string | null) => void
+
+  // Selected category
+  selectedCategory: string
+  setSelectedCategory: (c: string) => void
+
+  // Quiz state
+  quizQuestions: HardcodedQuestion[]
+  setQuizQuestions: (q: HardcodedQuestion[]) => void
   currentQuestionIndex: number
   setCurrentQuestionIndex: (i: number) => void
-  questions: QuizQuestion[]
-  setQuestions: (q: QuizQuestion[]) => void
-  answeredQuestionIds: string[]
-  addAnsweredQuestionId: (id: string) => void
+  selectedAnswer: number | null
+  setSelectedAnswer: (a: number | null) => void
+  isAnswered: boolean
+  setIsAnswered: (v: boolean) => void
   correctCount: number
   incrementCorrect: () => void
   wrongCount: number
   incrementWrong: () => void
   score: number
-  calculateScore: () => number
+  addScore: (pts: number) => void
+  timeLeft: number
+  setTimeLeft: (t: number) => void
+
+  // Admin
   isAdminAuth: boolean
   setIsAdminAuth: (v: boolean) => void
-  leaderboard: LeaderboardEntry[]
-  setLeaderboard: (entries: LeaderboardEntry[]) => void
+
+  // Leaderboard (stored in localStorage)
+  leaderboard: PlayerData[]
+  setLeaderboard: (entries: PlayerData[]) => void
+  addPlayerToLeaderboard: (player: PlayerData) => void
+
+  // Reset
   resetQuiz: () => void
 }
 
+const LEADERBOARD_KEY = '7s_squad_leaderboard'
+
+function loadLeaderboard(): PlayerData[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const stored = localStorage.getItem(LEADERBOARD_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function saveLeaderboard(entries: PlayerData[]) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries))
+  } catch { /* ignore */ }
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
-  view: 'home',
-  setView: (view) => set({ view }),
   lang: 'badini',
   setLang: (lang) => set({ lang }),
-  participant: null,
-  setParticipant: (participant) => set({ participant }),
-  selectedCategoryId: null,
-  setSelectedCategoryId: (selectedCategoryId) => set({ selectedCategoryId }),
+
+  section: 'home',
+  setSection: (section) => set({ section }),
+
+  playerName: '',
+  setPlayerName: (playerName) => set({ playerName }),
+  playerAvatar: null,
+  setPlayerAvatar: (playerAvatar) => set({ playerAvatar }),
+
+  selectedCategory: '',
+  setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
+
+  quizQuestions: [],
+  setQuizQuestions: (quizQuestions) => set({ quizQuestions }),
   currentQuestionIndex: 0,
   setCurrentQuestionIndex: (currentQuestionIndex) => set({ currentQuestionIndex }),
-  questions: [],
-  setQuestions: (questions) => set({ questions }),
-  answeredQuestionIds: [],
-  addAnsweredQuestionId: (id) =>
-    set((state) => ({ answeredQuestionIds: [...state.answeredQuestionIds, id] })),
+  selectedAnswer: null,
+  setSelectedAnswer: (selectedAnswer) => set({ selectedAnswer }),
+  isAnswered: false,
+  setIsAnswered: (isAnswered) => set({ isAnswered }),
   correctCount: 0,
-  incrementCorrect: () => set((state) => ({ correctCount: state.correctCount + 1 })),
+  incrementCorrect: () => set((s) => ({ correctCount: s.correctCount + 1 })),
   wrongCount: 0,
-  incrementWrong: () => set((state) => ({ wrongCount: state.wrongCount + 1 })),
+  incrementWrong: () => set((s) => ({ wrongCount: s.wrongCount + 1 })),
   score: 0,
-  calculateScore: () => get().correctCount * 10,
+  addScore: (pts) => set((s) => ({ score: s.score + pts })),
+  timeLeft: 120,
+  setTimeLeft: (timeLeft) => set({ timeLeft }),
+
   isAdminAuth: false,
   setIsAdminAuth: (isAdminAuth) => set({ isAdminAuth }),
+
   leaderboard: [],
-  setLeaderboard: (leaderboard) => set({ leaderboard }),
+  setLeaderboard: (leaderboard) => {
+    set({ leaderboard })
+    saveLeaderboard(leaderboard)
+  },
+  addPlayerToLeaderboard: (player) => {
+    const current = get().leaderboard
+    // Check if player already exists by name, update their score
+    const existing = current.findIndex(p => p.name === player.name)
+    let updated: PlayerData[]
+    if (existing >= 0) {
+      updated = [...current]
+      updated[existing] = {
+        ...updated[existing],
+        score: updated[existing].score + player.score,
+        correctCount: updated[existing].correctCount + player.correctCount,
+        totalAnswered: updated[existing].totalAnswered + player.totalAnswered,
+        avatar: player.avatar || updated[existing].avatar,
+      }
+    } else {
+      updated = [...current, player]
+    }
+    // Sort by score descending
+    updated.sort((a, b) => b.score - a.score)
+    // Keep top 100
+    updated = updated.slice(0, 100)
+    set({ leaderboard: updated })
+    saveLeaderboard(updated)
+  },
+
   resetQuiz: () =>
     set({
       currentQuestionIndex: 0,
-      questions: [],
-      answeredQuestionIds: [],
+      selectedAnswer: null,
+      isAnswered: false,
       correctCount: 0,
       wrongCount: 0,
       score: 0,
-      selectedCategoryId: null,
+      timeLeft: 120,
+      quizQuestions: [],
     }),
 }))
