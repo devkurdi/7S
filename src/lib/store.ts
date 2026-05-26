@@ -38,6 +38,15 @@ export interface ParticipantData {
   avatar: string | null
 }
 
+export interface LeaderboardEntry {
+  id: string
+  name: string
+  avatar: string | null
+  correctCount: number
+  totalAnswered: number
+  score: number
+}
+
 interface AppState {
   view: AppView
   setView: (view: AppView) => void
@@ -58,13 +67,15 @@ interface AppState {
   wrongCount: number
   incrementWrong: () => void
   score: number
-  setScore: (s: number) => void
+  calculateScore: () => number
   isAdminAuth: boolean
   setIsAdminAuth: (v: boolean) => void
+  leaderboard: LeaderboardEntry[]
+  setLeaderboard: (entries: LeaderboardEntry[]) => void
   resetQuiz: () => void
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   view: 'welcome',
   setView: (view) => set({ view }),
   lang: 'badini',
@@ -85,9 +96,11 @@ export const useAppStore = create<AppState>((set) => ({
   wrongCount: 0,
   incrementWrong: () => set((state) => ({ wrongCount: state.wrongCount + 1 })),
   score: 0,
-  setScore: (score) => set({ score }),
+  calculateScore: () => get().correctCount * 10,
   isAdminAuth: false,
   setIsAdminAuth: (isAdminAuth) => set({ isAdminAuth }),
+  leaderboard: [],
+  setLeaderboard: (leaderboard) => set({ leaderboard }),
   resetQuiz: () =>
     set({
       currentQuestionIndex: 0,
