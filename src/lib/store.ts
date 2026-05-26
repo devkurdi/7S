@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export type Lang = 'badini' | 'sorani'
 
-export type AppView = 'welcome' | 'quiz' | 'admin' | 'results'
+export type AppView = 'home' | 'quiz' | 'top' | 'admin' | 'results'
 
 export interface QuizQuestion {
   id: string
@@ -76,7 +76,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  view: 'welcome',
+  view: 'home',
   setView: (view) => set({ view }),
   lang: 'badini',
   setLang: (lang) => set({ lang }),

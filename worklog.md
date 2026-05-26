@@ -1,57 +1,29 @@
 ---
 Task ID: 1
-Agent: Main Agent
-Task: Build complete 7S SQUAD PSYAR Quiz Web Application
+Agent: main
+Task: Complete rewrite of 7S SQUAD PSYAR quiz app with new features
 
 Work Log:
-- Initialized fullstack project environment
-- Created Prisma schema with Category, Question, Participant, Answer models
-- Created API routes: /api/categories, /api/questions, /api/participants, /api/answers, /api/admin, /api/seed
-- Created Zustand store for app state management
-- Built complete single-page application with 4 views: Welcome, Quiz, Admin, Results
-- Implemented bilingual support (Badini & Sorani Kurdish)
-- Implemented 2-minute timer per question
-- Implemented answer validation with color-coded feedback (green for correct, red for wrong, amber for timeout)
-- Implemented admin panel with password protection (00998877)
-- Admin can add/delete categories and questions dynamically
-- Seeded database with 2 categories (ئایینی, زانستی) and 8 sample questions
-- Fixed all ESLint errors (React Compiler strict rules)
-- Verified server health check passes
+- Read and analyzed all existing project files (page.tsx, store.ts, schema.prisma, API routes)
+- Updated Zustand store: changed 'welcome' view to 'home', added 'top' view for leaderboard
+- Completely rewrote page.tsx with new architecture:
+  - NavBar component with HOME/QUIZ/TOP navigation tabs
+  - ADMIN PANEL button on top-right with modal password login
+  - Language toggle (Badini/Surani) on top-left
+  - HomePage: Beautiful professional design with name input + visual feedback (green checkmark), avatar upload, category selection, start button, mini TOP 5 leaderboard
+  - QuizPage: Sequential question flow, 120s timer, correct/wrong/timeout visual feedback, auto-advance, 10 points per correct answer
+  - TopPage: Full leaderboard showing up to 100 players with search, ranked by score, gold/silver/bronze badges, player name + points + avatar
+  - ResultsPage: Score summary with percentage, correct/wrong counts, retry/home buttons
+  - AdminPage: Password-protected (00998877), tabbed UI for categories and questions CRUD
+- Added new translation keys: homeTab, quizTab, topTab, rank, searchPlayer, noPlayersYet, totalPoints, welcomeBack, profileSection, enterNameToStart
+- Fixed missing lucide-react icon (Ranking) - removed unused import
+- Cleaned up unused icon imports (Brain, Flame, ChevronLeft, ArrowRight)
+- Build verified successfully with no errors
 
 Stage Summary:
-- Complete Quiz Web App running on Next.js 16 with Tailwind CSS
-- 2 categories, 8 sample questions seeded
-- All features working: welcome page, quiz with timer, admin panel, results page
-- Lint passes cleanly
-
----
-Task ID: 2
-Agent: Main Agent
-Task: Fix quiz flow, improve timer, beautify wrong answer UI, overall UI polish
-
-Work Log:
-- Fixed quiz flow: name + image upload + start button now properly navigates to quiz with questions
-- Added CircularTimer component with animated SVG circular progress indicator
-- Timer changes color: blue (normal) -> amber (≤30s) -> red pulsing (≤10s)
-- Added glow effect on timer when time is running low
-- Completely redesigned result messages:
-  - Correct: PartyPopper icon + stars animation + green gradient background
-  - Wrong: XCircle icon + "wrong" message + correct answer in separate green box
-  - Timeout: Timer icon + "time up" message + correct answer in green box
-- Added FloatingParticles component for animated background particles
-- Added gradient header bands (blue-purple-red) on all cards
-- Improved option buttons with hover animations, staggered entrance animations
-- Option numbers replaced with check/X icons when showing results
-- Added question progress bar at top of quiz page
-- Improved typography and spacing throughout
-- Added purple gradient to buttons and accents
-- Improved results page with score icons (PartyPopper/ThumbsUp/Sparkles) based on percentage
-- All ESLint checks pass cleanly
-- Server health check passes
-
-Stage Summary:
-- Quiz flow works correctly from start to finish
-- Timer is visually prominent with circular SVG animation
-- Wrong/timeout answers show beautiful result cards with correct answer highlighted
-- Overall UI significantly more modern and polished
-- Lint passes cleanly
+- Complete rewrite of page.tsx (~900 lines) with all user-requested features
+- HOME page with professional design, name input with visual feedback, ADMIN PANEL on top-right
+- TOP leaderboard page showing 1-100 players with names and points
+- Sequential quiz flow with 10 points per correct answer
+- All text in Badini Kurdish with Surani support
+- Build passes successfully
