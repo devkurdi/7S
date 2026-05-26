@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  nameBadini  String
+  nameSorani  String
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id            String     @id @default(cuid())
+  textBadini    String
+  textSorani    String
+  option1Badini String
+  option1Sorani String
+  option2Badini String
+  option2Sorani String
+  option3Badini String
+  option3Sorani String
+  option4Badini String
+  option4Sorani String
+  correctAnswer Int
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  answers       Answer[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Participant {
+  id        String   @id @default(cuid())
+  name      String
+  avatar    String?
+  answers   Answer[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Answer {
+  id             String      @id @default(cuid())
+  participantId  String
+  questionId     String
+  selectedAnswer Int?
+  isCorrect      Boolean
+  participant    Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+
+  @@unique([participantId, questionId])
+}
