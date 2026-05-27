@@ -29,7 +29,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 // ===================== TRANSLATIONS =====================
 const translations = {
-  Badini: {
+  badini: {
     appName: '7S SQUAD PSYAR',
     welcome: 'ب خێرهاتی',
     enterName: 'ناڤێ خۆ بنڤیسە...',
@@ -108,7 +108,7 @@ const translations = {
     errorAdded: 'خەلەتەک چێبوو! نەهاتە زێدەکرن',
     confirmDelete: 'تۆ دڵنیایی دێ ژێبەی؟',
 },
-  Sorani: {
+  sorani: {
     appName: '7S SQUAD PSYAR',
     welcome: 'بەخێربێیت',
     enterName: 'ناوت بنووسە...',
@@ -186,8 +186,7 @@ const translations = {
     successAdded: 'بە سەرکەوتوویی زیادکرا',
     errorAdded: 'هەڵەیەک ڕوویدا! زیاد نەکرا',
     confirmDelete: 'دڵنیای دەتەوێت بیڕسیتەوە؟',
-},
-  
+ },
 }
 
 type TransKey = keyof typeof translations.badini
