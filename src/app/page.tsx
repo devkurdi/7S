@@ -213,8 +213,8 @@ function CircularTimer({ timeLeft, maxTime }: { timeLeft: number; maxTime: numbe
   const radius = 36
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (percentage / 100) * circumference
-  const isLow = timeLeft <= 30
-  const isCritical = timeLeft <= 10
+  const isLow = timeLeft <= 15
+  const isCritical = timeLeft <= 5
 
   return (
     <div className="relative w-20 h-20 mx-auto">
@@ -1645,7 +1645,7 @@ function QuizSection() {
   useEffect(() => {
     if (isAnswered || !quizQuestions.length) return
 
-    setTimeLeft(120)
+    setTimeLeft(60)
     timerRef.current = setInterval(() => {
       const current = useAppStore.getState().timeLeft
       if (current <= 1) {
@@ -1774,7 +1774,7 @@ function QuizSection() {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
       setSelectedAnswer(null)
       setIsAnswered(false)
-      setTimeLeft(120)
+      setTimeLeft(60)
     }
   }
 
@@ -1825,7 +1825,7 @@ function QuizSection() {
                 {/* Timer + Progress Row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CircularTimer timeLeft={timeLeft} maxTime={120} />
+                    <CircularTimer timeLeft={timeLeft} maxTime={60} />
                   </div>
                   <div className="flex-1 mx-3">
                     <div className="w-full bg-white/5 rounded-full h-1.5 mb-1">
