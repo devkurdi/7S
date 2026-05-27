@@ -116,7 +116,10 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    background: #0a0e27;
+    color: white;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }

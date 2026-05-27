@@ -321,7 +321,7 @@ export default function App() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0d1442] to-[#1a0a2e] relative">
+    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-[#0a0e27] via-[#0d1442] to-[#1a0a2e] relative">
       <AnimatedBackground />
       <div className="relative z-10">
         <NavBar />
