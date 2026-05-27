@@ -768,10 +768,25 @@ function HomeSection() {
 }
 
 // ===================== QUESTIONS BROWSER SECTION =====================
+// Category icon mapping with emojis for visual distinction
+const categoryIcons: Record<string, { emoji: string; gradient: string; iconBg: string }> = {
+  'ئایینی': { emoji: '🕌', gradient: 'from-emerald-500 to-teal-500', iconBg: 'bg-emerald-500/20' },
+  'زانستی': { emoji: '🔬', gradient: 'from-blue-500 to-cyan-500', iconBg: 'bg-blue-500/20' },
+  'مێژوویی': { emoji: '🏛️', gradient: 'from-amber-500 to-orange-500', iconBg: 'bg-amber-500/20' },
+  'جوگرافی': { emoji: '🌍', gradient: 'from-green-500 to-emerald-500', iconBg: 'bg-green-500/20' },
+  'وەرزشی': { emoji: '⚽', gradient: 'from-red-500 to-rose-500', iconBg: 'bg-red-500/20' },
+  'گشتی': { emoji: '💡', gradient: 'from-purple-500 to-pink-500', iconBg: 'bg-purple-500/20' },
+}
+
+function getCategoryStyle(name: string) {
+  return categoryIcons[name] || { emoji: '📚', gradient: 'from-indigo-500 to-blue-500', iconBg: 'bg-indigo-500/20' }
+}
+
 function QuestionsSection() {
   const lang = useAppStore(s => s.lang)
   const { categories } = useCategories()
   const [selectedCat, setSelectedCat] = useState<string>('')
+  const [viewMode, setViewMode] = useState<'categories' | 'list'>('categories')
   const { questions, loading, refetch } = useQuestions(selectedCat || undefined)
   const { playerName, setTab, setSelectedCategory, resetQuiz } = useAppStore()
   const { toast } = useToast()
@@ -793,120 +808,250 @@ function QuestionsSection() {
     setTab('quiz')
   }
 
+  const handleCategoryClick = (catId: string) => {
+    setSelectedCat(catId)
+    setViewMode('list')
+    refetch()
+  }
+
+  const totalQuestions = categories.reduce((sum, c) => sum + (c._count?.questions || 0), 0)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-5xl mx-auto px-4 pt-4 pb-8 space-y-4"
+      className="max-w-5xl mx-auto px-4 pt-4 pb-8 space-y-5"
     >
       {/* Header */}
       <div className="flex items-center justify-between" dir="rtl">
-        <div className="flex items-center gap-2">
-          <ListChecks className="w-5 h-5 text-blue-400" />
-          <h2 className="text-white font-bold text-lg">{t(lang, 'questionsTab')}</h2>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
+            <ListChecks className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-white font-bold text-lg">{t(lang, 'questionsTab')}</h2>
+            <p className="text-white/30 text-[10px]">{totalQuestions} {t(lang, 'questions')}</p>
+          </div>
         </div>
-        <span className="text-white/40 text-xs">{questions.length} {t(lang, 'questions')}</span>
-      </div>
-
-      {/* Category Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2" dir="rtl">
-        <button
-          onClick={() => { setSelectedCat(''); refetch() }}
-          className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            !selectedCat
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-              : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
-          }`}
-        >
-          {t(lang, 'allCategories')}
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => { setSelectedCat(cat.id); refetch() }}
-            className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              selectedCat === cat.id
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                : 'bg-white/5 border border-white/10 text-white/60 hover:bg-white/10'
-            }`}
-          >
-            {getCatName(cat)} ({cat._count?.questions || 0})
-          </button>
-        ))}
-        {selectedCat && (
+        {viewMode === 'list' && (
           <Button
-            onClick={() => handleStartFromCategory(selectedCat)}
-            className="flex-shrink-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl px-4 py-2 text-xs"
+            onClick={() => { setViewMode('categories'); setSelectedCat('') }}
+            variant="outline"
+            size="sm"
+            className="bg-white/5 border-white/10 text-white/60 hover:bg-white/10 rounded-xl text-xs"
           >
-            <Play className="w-3.5 h-3.5 mr-1.5" />
-            {t(lang, 'startQuiz')}
+            <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+            {t(lang, 'allCategories')}
           </Button>
         )}
       </div>
 
-      {/* Questions List */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="text-center py-12">
-          <BookOpen className="w-12 h-12 text-white/15 mx-auto mb-2" />
-          <p className="text-white/30 text-sm" dir="rtl">{t(lang, 'noQuestions')}</p>
-        </div>
-      ) : (
-        <ScrollArea className="max-h-[calc(100vh-220px)]">
-          <div className="space-y-2">
-            {questions.map((q, idx) => {
-              const catName = lang === 'badini' ? q.category.nameBadini : q.category.nameSorani
+      {/* Categories Grid View */}
+      {viewMode === 'categories' && (
+        <div className="space-y-4">
+          {/* Search/Stats Bar */}
+          <Card className="bg-white/[0.04] backdrop-blur-xl border-white/10 overflow-hidden">
+            <CardContent className="p-3" dir="rtl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-white/30" />
+                  <span className="text-white/40 text-xs">{t(lang, 'selectCategory')}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                  <span className="text-yellow-300/60 text-[10px]">{t(lang, 'pointsPerQuestion')}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Category Cards Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {/* All Categories Card */}
+            <motion.button
+              whileHover={{ scale: 1.03, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { setSelectedCat(''); setViewMode('list'); refetch() }}
+              className="rounded-2xl p-4 border-2 border-white/10 bg-white/[0.03] hover:border-purple-400/50 hover:bg-white/[0.06] transition-all text-center group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="mx-auto mb-3 w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-red-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                  <BookOpen className="w-7 h-7 text-white" />
+                </div>
+                <p className="text-white text-sm font-bold mb-1" dir="rtl">{t(lang, 'allCategories')}</p>
+                <div className="flex items-center justify-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  <span className="text-white/40 text-[11px]">{totalQuestions} {t(lang, 'questions')}</span>
+                </div>
+              </div>
+            </motion.button>
+
+            {/* Individual Category Cards */}
+            {categories.map((cat, i) => {
+              const style = getCategoryStyle(cat.nameBadini)
+              const qCount = cat._count?.questions || 0
               return (
-                <motion.div
-                  key={q.id}
-                  initial={{ opacity: 0, y: 5 }}
+                <motion.button
+                  key={cat.id}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleCategoryClick(cat.id)}
+                  className="rounded-2xl p-4 border-2 border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06] transition-all text-center group relative overflow-hidden"
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.02 }}
+                  transition={{ delay: i * 0.05 }}
                 >
-                  <Card className="bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.06] transition-all overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3" dir="rtl">
-                        <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/15 flex items-center justify-center text-xs font-bold text-blue-300">
-                          {idx + 1}
-                        </span>
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-purple-500/10 text-purple-300/70 border-purple-500/15 text-[9px] px-1.5 py-0">
-                              {catName}
-                            </Badge>
-                            <span className="text-yellow-400/50 text-[9px] flex items-center gap-0.5">
-                              <Star className="w-2.5 h-2.5 fill-yellow-400/50" /> ١٠ {t(lang, 'points')}
-                            </span>
-                          </div>
-                          <p className="text-white/90 text-sm leading-relaxed">{getQText(q)}</p>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {[1, 2, 3, 4].map((optIdx) => (
-                              <div
-                                key={optIdx}
-                                className={`px-3 py-1.5 rounded-lg text-xs ${
-                                  optIdx === q.correctAnswer
-                                    ? 'bg-green-500/10 border border-green-500/20 text-green-300'
-                                    : 'bg-white/[0.03] border border-white/5 text-white/50'
-                                }`}
-                              >
-                                <span className="text-white/30 ml-1">{optIdx}.</span>
-                                {getOption(q, optIdx)}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity`} />
+                  <div className="relative">
+                    <div className={`mx-auto mb-3 w-14 h-14 rounded-xl ${style.iconBg} flex items-center justify-center shadow-lg`}>
+                      <span className="text-2xl">{style.emoji}</span>
+                    </div>
+                    <p className="text-white text-sm font-bold mb-1" dir="rtl">{getCatName(cat)}</p>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${style.gradient}`} />
+                      <span className="text-white/40 text-[11px]">{qCount} {t(lang, 'questions')}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Play className="w-3 h-3 text-green-400" />
+                      <span className="text-green-400/70 text-[10px] font-bold">{t(lang, 'startQuiz')}</span>
+                    </div>
+                  </div>
+                </motion.button>
               )
             })}
           </div>
-        </ScrollArea>
+
+          {/* Quick Start All Button */}
+          <Button
+            onClick={() => handleStartFromCategory('')}
+            disabled={!playerName.trim()}
+            className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white font-bold text-base py-5 rounded-2xl shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:scale-[1.01] disabled:opacity-40 disabled:hover:scale-100"
+          >
+            <Play className="w-5 h-5 mr-2" />
+            {t(lang, 'startQuiz')} - {t(lang, 'allCategories')}
+          </Button>
+        </div>
+      )}
+
+      {/* Questions List View */}
+      {viewMode === 'list' && (
+        <div className="space-y-3">
+          {/* Category Header + Start Button */}
+          {selectedCat && (() => {
+            const cat = categories.find(c => c.id === selectedCat)
+            if (!cat) return null
+            const style = getCategoryStyle(cat.nameBadini)
+            return (
+              <Card className="bg-white/[0.04] backdrop-blur-xl border-white/10 shadow-xl overflow-hidden">
+                <div className={`h-1 bg-gradient-to-r ${style.gradient}`} />
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between" dir="rtl">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-xl ${style.iconBg} flex items-center justify-center`}>
+                        <span className="text-xl">{style.emoji}</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-sm">{getCatName(cat)}</p>
+                        <p className="text-white/30 text-[10px]">{questions.length} {t(lang, 'questions')}</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleStartFromCategory(selectedCat)}
+                      disabled={!playerName.trim()}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl text-xs px-4 py-2 disabled:opacity-40"
+                    >
+                      <Play className="w-3.5 h-3.5 mr-1.5" />
+                      {t(lang, 'startQuiz')}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })()}
+
+          {/* Questions List */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="w-12 h-12 text-white/15 mx-auto mb-2" />
+              <p className="text-white/30 text-sm" dir="rtl">{t(lang, 'noQuestions')}</p>
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[calc(100vh-300px)]">
+              <div className="space-y-2.5">
+                {questions.map((q, idx) => {
+                  const catName = lang === 'badini' ? q.category.nameBadini : q.category.nameSorani
+                  const style = getCategoryStyle(catName)
+                  return (
+                    <motion.div
+                      key={q.id}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                    >
+                      <Card className="bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.06] transition-all overflow-hidden group">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3" dir="rtl">
+                            {/* Question Number Badge */}
+                            <div className={`flex-shrink-0 w-9 h-9 rounded-xl ${style.iconBg} border border-white/5 flex items-center justify-center`}>
+                              <span className="text-sm font-bold text-white/70">{idx + 1}</span>
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-2.5">
+                              {/* Category + Points Tags */}
+                              <div className="flex items-center gap-2">
+                                <Badge className={`bg-gradient-to-r ${style.gradient} text-white border-0 text-[9px] px-2 py-0.5 font-bold`}>
+                                  {catName}
+                                </Badge>
+                                <span className="text-yellow-400/50 text-[9px] flex items-center gap-0.5">
+                                  <Star className="w-2.5 h-2.5 fill-yellow-400/50" /> ١٠ {t(lang, 'points')}
+                                </span>
+                              </div>
+                              {/* Question Text */}
+                              <p className="text-white/90 text-sm leading-relaxed font-medium">{getQText(q)}</p>
+                              {/* Options */}
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {[1, 2, 3, 4].map((optIdx) => (
+                                  <div
+                                    key={optIdx}
+                                    className={`px-3 py-2 rounded-xl text-xs transition-all ${
+                                      optIdx === q.correctAnswer
+                                        ? 'bg-green-500/10 border border-green-500/20 text-green-300 font-bold'
+                                        : 'bg-white/[0.03] border border-white/5 text-white/50'
+                                    }`}
+                                  >
+                                    <span className={`${optIdx === q.correctAnswer ? 'text-green-400' : 'text-white/20'} ml-1 font-bold`}>{optIdx}.</span>
+                                    {getOption(q, optIdx)}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </ScrollArea>
+          )}
+
+          {/* Start Quiz Button at Bottom */}
+          {questions.length > 0 && (
+            <Button
+              onClick={() => handleStartFromCategory(selectedCat)}
+              disabled={!playerName.trim()}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-2xl py-4 shadow-lg shadow-green-500/20 disabled:opacity-40"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {t(lang, 'startQuiz')}
+            </Button>
+          )}
+        </div>
       )}
     </motion.div>
   )
